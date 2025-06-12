@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center my-3">
+  <h3 class="mb-0 mx-4">{{ days.0|date:"Y년 m월 d일" }} ~ {{ days.6|date:"m월 d일" }}</h3>
+  
+  {% if has_ai_session %}
+    <div class="d-flex flex-row align-items-center ms-4">
+      <h2 class="mb-0 text-black mx-4">AI 일정 재배치</h2>
+      <div>
+        <form method="post" action="{% url 'calendar:ai_confirm' %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm me-2">확정</button>
+        </form>
+        <form method="post" action="{% url 'calendar:ai_cancel' %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger btn-sm">취소</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  <div>
+    <a class="btn btn-outline-secondary mx-1" href="?date={{ prev_date }}">◀</a>
+    <a class="btn btn-outline-secondary mx-1" href="?date={{ next_date }}">▶</a>
+
+  </div>
+</div>
+
+<table class="table table-bordered text-center" style="table-layout: fixed; width: 100%;">
+    <colgroup>
+        <col style="width: 5%;">               <!-- 시간 열 -->
+        <col style="width: 15%;" span="7"> <!-- 7일 열 -->
+      </colgroup>
+    <thead>
+    <tr>
+      <th
+      >시간</th>
+      {% for day in days %}
+        <th {% if day == today %}
+        class="border border-3 border-primary"
+        {% endif %}
+        >{{ day|date:"m/d (D)" }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for hour in hours %}
+    <tr>
+      <th>{{ hour|stringformat:"02d" }}:00</th>
+      {% for day in days %}
+        <td class="px-1 py-0" id="cell-{{day|date:'Y-m-d'}}-{{hour|stringformat:'02d'}}">
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+
+    <!-- 일정 상세 보기 모달 -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="taskDetailModalLabel">일정 상세 정보</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>과목:</strong> <span id="detailSubject"></span></p>
+              <p><strong>마감일:</strong> <span id="detailDeadline"></span></p>
+              <p><strong>시행일:</strong> <span id="detailstarttime"></span></p>
+              <p><strong>고정 일정:</strong> <span id="detailFixed"></span></p>
+              <p><strong>시험 여부:</strong> <span id="detailExam"></span></p>
+              <p><strong>소요 시간:</strong> <span id="detailTime"></span></p>
+            </div>
+            <div class="modal-footer" id="editbuttons">
+              <a href="#" id="editTaskLink" class="btn btn-primary">수정</a>
+              <button type="button" class="btn btn-success" id="markDoneBtn">완료</button>
+              <button type="button" class="btn btn-warning d-none" id="unmarkDoneBtn">미완료</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  </tbody>
+</table>
+<script>
+  window.prev_date='{{prev_date}}';
+  window.next_date='{{next_date}}';
+</script>
+<script src="{% static 'calendar_week.js' %}"></script>
+{% endblock %}

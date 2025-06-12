@@ -1,0 +1,112 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+    <title>SASA Calendar</title>
+    <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
+</head>
+<style>
+  #calendarOptions {
+    position: absolute;
+    top: 70px;   /* 네비게이션바 아래 간격 */
+    right: 20px; /* 오른쪽 여백 */
+    width: auto;
+    z-index: 1050;
+  }
+</style>
+<body>
+
+<!-- 네비게이션바 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container-fluid">
+
+        <a class="navbar-brand" href="{% url 'calendar:index' %}">SASA Calendar</a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    {% if user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'common:logout' %}">{{ user.username }} (로그아웃)</a>
+                    {% else %}
+                        <a class="nav-link" href="{% url 'common:login' %}">로그인</a>
+                    {% endif %}
+                </li>
+                <li>
+                    {% if not user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'common:signup' %}">회원가입</a>
+                    {% endif %}
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center flex-wrap">
+                <a class="btn btn-outline-primary me-2" href="{% url 'calendar:schedule_replace'%}">AI 일정 재배치</a>
+                {% if not has_ai_session %}
+                <a class="btn btn-outline-primary me-2" href="{% url 'calendar:schedule_create' %}">일정 추가</a>
+                {% endif %}
+                <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:schedule_week' %}">주간 보기</a>
+                <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:index' %}">월간 보기</a>
+                {% if not has_ai_session %}
+                <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:schedule_list' %}">일정 목록</a>
+                {% endif %}
+                <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:schedule_type_list' %}">분류 관리</a>
+                
+                <!-- 옵션 펼치기 버튼 -->
+                <button class="btn btn-outline-dark me-2" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#calendarOptions" aria-expanded="false" aria-controls="calendarOptions">
+                    옵션
+                </button>
+                <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:how_to_use' %}">사용 가이드</a>
+                <!-- <a class="btn btn-outline-secondary me-2" href="{% url 'calendar:test' %}">test button</a> -->
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 옵션 영역 (navbar 아래에 위치) -->
+<div class="collapse" id="calendarOptions">
+  <div class="container">
+    <div class="d-flex align-items-center flex-wrap gap-3 p-3 border rounded bg-light shadow">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="showDone" checked>
+        <label class="form-check-label" for="showDone">완료 일정 표시</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="showDeadline" checked>
+        <label class="form-check-label" for="showDeadline">마감일 표시</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="showStart" checked>
+        <label class="form-check-label" for="showStart">시행일 표시</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 페이지 콘텐츠 -->
+<script>
+  window.currentUserId = {{ user_id|default:"null" }};
+  window.scheduleData = {{ schedule_json|safe|default:"null" }};
+  window.AIscheduleData = {{ ai_suggestions|safe|default:"null"}};
+  window.exeptions = {{hide_ids|default:"null"}};
+  window.hasAISession = {{ has_ai_session|yesno:"true,false" }};
+</script>
+
+{% block content %}
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'keyboard.js' %}"></script>
+<script src="{% static 'base.js' %}"></script>
+</body>
+</html>

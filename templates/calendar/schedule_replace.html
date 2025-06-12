@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">AI 일정 재배치</h2>
+
+  <form method="post" action="{% url 'calendar:ai_run' %}">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label for="schedule-start" class="form-label">재배치 시작일 (기본: 현재)</label>
+      <input type="datetime-local" id="schedule-start" name="schedule_start"
+             class="form-control mb-2"
+             value="{{ default_start }}">
+      <label for="schedule-end" class="form-label">재배치 마감일 (기본: 1주일 뒤)</label>
+      <input type="datetime-local" id="schedule-end" name="schedule_end"
+             class="form-control"
+             value="{{ default_end }}">
+    </div>
+
+    <hr class="my-4">
+
+    <div class="mb-4">
+        <h5 class="mb-3">일일 가용 시간 설정 ⏰</h5>
+        <p class="text-muted small">AI가 일정을 배분할 수 있는 시간을 하루 기준으로 설정해주세요. 이 설정은 브라우저에 저장됩니다.</p>
+        <div class="d-flex align-items-center">
+            <input type="time" id="available-start-time" name="available_start_time" class="form-control me-2" value="09:00">
+            <span>~</span>
+            <input type="time" id="available-end-time" name="available_end_time" class="form-control ms-2" value="18:00">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">재배치할 일정 선택</h5>
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>일정명</th>
+          <th>일정 분류</th>
+          <th>마감일</th>
+          <th>소요 시간(분)</th>
+          <th>시험 여부</th>
+          <th>
+            <input type="checkbox" id="select-all">
+            <label for="select-all" class="small mb-0 mx-1">전체선택</label>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in schedules %}
+        <tr>
+          <td class="fw-bold">{{ item.task_name }}</td>
+          <td>{{ item.task_type | default_if_none:""}}</td>
+          <td>{{ item.deadline|date:"Y-m-d H:i" }}</td>
+          <td>{{ item.duration_minutes|default_if_none:""}}</td>
+          <td>{{ item.is_exam_task|yesno:"📘,❌" }}</td>
+          <td>
+            <input type="checkbox" name="selected_ids" value="{{ item.id }}">
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted">등록된 일정이 없습니다.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="text-end mt-3">
+      <button type="submit" class="btn btn-primary">선택한 일정 재배치</button>
+    </div>
+  </form>
+</div>
+
+{% if messages %}
+<script>
+  {% for msg in messages %}
+    alert("{{ msg }}");
+  {% endfor %}
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // (수정됨) 가용 시간 설정을 브라우저에 저장하고 불러오는 기능
+  const startTimeInput = document.getElementById('available-start-time');
+  const endTimeInput = document.getElementById('available-end-time');
+
+  // 페이지 로드 시 저장된 값 불러오기
+  const savedStartTime = localStorage.getItem('userAvailableStartTime');
+  const savedEndTime = localStorage.getItem('userAvailableEndTime');
+
+  if (savedStartTime) {
+    startTimeInput.value = savedStartTime;
+  }
+  if (savedEndTime) {
+    endTimeInput.value = savedEndTime;
+  }
+
+  // 값이 변경될 때마다 브라우저에 저장
+  startTimeInput.addEventListener('change', function() {
+    localStorage.setItem('userAvailableStartTime', this.value);
+  });
+  endTimeInput.addEventListener('change', function() {
+    localStorage.setItem('userAvailableEndTime', this.value);
+  });
+
+
+  // 전체 선택/해제 기능
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = document.querySelectorAll('input[name="selected_ids"]');
+
+    checkboxes.forEach(cb => cb.checked = true);
+  if (selectAll) {
+    selectAll.checked = true;
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (!selectAll) return;
+      const allChecked = Array.from(checkboxes).every(chk => chk.checked);
+      const anyChecked = Array.from(checkboxes).some(chk => chk.checked);
+      selectAll.indeterminate = !allChecked && anyChecked;
+      selectAll.checked = allChecked;
+    });
+  });
+});
+</script>
+{% endblock %}

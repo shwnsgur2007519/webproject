@@ -1,0 +1,18 @@
+steps:
+  - name: python:3.9
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        python manage.py collectstatic --noinput
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        gcloud app deploy app.yaml --quiet
+
+timeout: "1200s"

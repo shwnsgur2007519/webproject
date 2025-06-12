@@ -1,0 +1,26 @@
+runtime: python39
+
+# 요청이 들어왔을 때 Gunicorn이 실행될 커맨드
+entrypoint: bash -c "python manage.py migrate && gunicorn -b :$PORT config.wsgi:application"
+
+# 정적 파일(collectstatic 결과)을 서빙하기 위한 핸들러
+handlers:
+  # URL 앞에 /static/ 이 붙은 파일은 static/ 폴더에서 서비스
+  - url: /static
+    static_dir: staticfiles
+
+  # 그 외 모든 요청은 Django 앱으로 전달
+  - url: /.*
+    script: auto
+
+env_variables:
+  # DJANGO_SECRET_KEY: "u#m-r54w(g&yb3zktktc1x@+qyb=&p1v5shwxoei$3qej2ywr_!"
+  DB_NAME: "django_db"
+  DB_USER: "root"
+  DB_PASSWORD: "abcdefg"
+  DB_HOST: "/cloudsql/aiproject-462109:asia-northeast3:myproject-db"
+
+beta_settings:
+  # 방금 생성한 인스턴스의 연결 이름으로 바꿔주세요
+  cloud_sql_instances: aiproject-462109:asia-northeast3:myproject-db
+

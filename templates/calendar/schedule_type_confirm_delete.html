@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2>정말 삭제하시겠습니까?</h2>
+  <p class="text-muted">"{{ type.name }}" 일정 분류는 삭제 후 복구할 수 없습니다.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">삭제</button>
+    <a href="{% url 'calendar:schedule_type_list' %}" class="btn btn-secondary">취소</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ is_edit|yesno:"일정 수정,일정 추가" }}</h2>
+    <form method="post" class="d-flex flex-column align-items-start">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                {% for field in form %}
+                    {% if field.errors %}
+                        <li><strong>{{ field.label }}</strong>
+                            <ul>
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <!-- 기본 필드 렌더링 -->
+        {{ form.task_name.label_tag }} {{ form.task_name }}
+        {{ form.duration_minutes.label_tag }} {{ form.duration_minutes }}
+        {{ form.difficulty.label_tag }} {{ form.difficulty }}
+        {{ form.importance.label_tag }} {{ form.importance }}
+        {{ form.task_type.label_tag }} {{ form.task_type }}
+        {{ form.subject.label_tag }} {{ form.subject }}
+        {{ form.is_exam_task.label_tag }} {{ form.is_exam_task }}
+        {{ form.exam.label_tag }} {{ form.exam }}
+        {{ form.deadline.label_tag }} {{ form.deadline }}
+        {{ form.start_time.label_tag }} {{ form.start_time }}
+        {{ form.end_time.label_tag }} {{ form.end_time }}
+        {{ form.is_fixed.label_tag }} {{ form.is_fixed }}
+
+        <!-- 🎨 색상 선택 필드 직접 렌더링 -->
+        <div class="mb-3">
+            <label for="id_color">색상</label>
+            <select name="color" id="id_color" class="form-select">
+                {% for code, label in form.fields.color.choices %}
+                    <option value="{{ code }}"
+                        {% if form.initial.color == code or form.data.color == code %}selected{% endif %}
+                        style="background-color: {{ code }}; color: {% if code in '#D9D96D,#D9C56D,#D9B86D,#D9A46D,#D98C6D' %}#000{% else %}#fff{% endif %};">
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 버튼 -->
+        <button type="submit" class="btn btn-primary my-1">저장</button>
+        <a href="{% url 'calendar:index' %}" class="btn btn-secondary my-1">취소</a>
+        {% if is_edit %}
+        <a href="{% url 'calendar:schedule_delete' id %}" class="btn btn-danger">삭제</a>
+        {% endif %}
+    </form>
+</div>
+<script>
+    const colorSelect = document.getElementById("id_color");
+
+    function updateSelectStyle() {
+        const selectedColor = colorSelect.value;
+        colorSelect.style.backgroundColor = selectedColor;
+
+        // 가독성을 위한 텍스트 색
+        const darkTextColors = ['#D9D96D', '#D9C56D', '#D9B86D', '#D9A46D', '#D98C6D'];
+        colorSelect.style.color = darkTextColors.includes(selectedColor.toUpperCase()) ? '#000' : '#fff';
+    }
+
+    // 초기 실행
+    updateSelectStyle();
+
+    // 변경 시 업데이트
+    colorSelect.addEventListener("change", updateSelectStyle);
+</script>
+
+{% endblock %}

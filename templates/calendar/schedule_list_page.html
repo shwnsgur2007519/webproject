@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">전체 일정 목록</h2>
+
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>일정명</th>
+        <th>과목</th>
+        <th>마감일</th>
+        <th>고정</th>
+        <th>시험</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in schedules %}
+      <tr>
+        <td class="fw-bold">{{ item.task_name }}</td>
+        <td>{{ item.subject }}</td>
+        <td>{{ item.deadline|date:"Y-m-d H:i" }}</td>
+        <td>{{ item.is_fixed|yesno:"✅,❌" }}</td>
+        <td>{{ item.is_exam_task|yesno:"📘,❌" }}</td>
+        <td>
+          <a href="{% url 'calendar:schedule_edit' item.id %}?next={{ request.get_full_path }}" class="btn btn-sm btn-outline-primary">수정</a>
+          <form method="post" action="{% url 'calendar:schedule_duplicate' item.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-warning">복제</button>
+          </form>
+
+          <a href="{% url 'calendar:schedule_delete' item.id %}" class="btn btn-sm btn-outline-danger">삭제</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center text-muted">등록된 일정이 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

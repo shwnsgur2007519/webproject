@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4 pb-0">
+
+  <!-- 월 제목과 이전/다음 버튼 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">{{ year }}년 {{ month }}월</h2>
+
+    {% if has_ai_session %}
+      <div class="d-flex flex-row align-items-center ms-4">
+        <h2 class="mb-0 text-black mx-4">AI 일정 재배치</h2>
+        <div>
+          <form method="post" action="{% url 'calendar:ai_confirm' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm me-2">확정</button>
+          </form>
+          <form method="post" action="{% url 'calendar:ai_cancel' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">취소</button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    <div>
+      <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-secondary me-2">◀</a>
+      <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline-secondary">▶</a>
+    </div>
+  </div>
+
+
+  <!-- 달력 테이블 -->
+  <div class="table-responsive">
+    <table class="table table-bordered text-center align-middle mb-0" style="table-layout: fixed; height: calc(100vh - 200px);">
+      <thead class="table-light">
+        <tr>
+          <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in calendar_data %}
+        <tr>
+          {% for day in week %}
+          <td class="align-top px-1 py-0" style="height: calc((100vh - 200px) / 6); overflow: hidden;">
+            {% if day != 0 %}
+              <!-- 날짜 숫자 (오늘이면 동그라미) -->
+              {% if day == today_day %}
+                <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-0 fw-bold"
+                    style="width: 1.5rem; height: 1.5rem;">
+                  {{ day }}
+                </div>
+              {% else %}
+                <div class="fw-bold mb-0">{{ day }}</div>
+              {% endif %}
+
+              <!-- 일정 리스트 -->
+              {% with schedule_map|get_item:day as schedule_pairs %}
+                {% if schedule_pairs %}
+                <div class="d-flex flex-column gap-1 align-items-start" id="cell-{{day}}">
+                  <!-- <div id="cell-{{ day }}"> -->
+                    <!-- 이 안을 JS가 채움 -->
+                  <!-- </div> -->
+                   
+                </div>
+                {% endif %}
+              {% endwith %}
+            {% endif %}
+
+
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        <!-- 일정 리스트 모달 -->
+        <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="scheduleModalLabel">일정 목록</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+              </div>
+              <div class="modal-body">
+                <ul class="list-group" id="scheduleModalList">
+                  <!-- JavaScript가 여기에 일정 항목들을 삽입합니다 -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 일정 상세 보기 모달 -->
+        <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="taskDetailModalLabel">일정 상세 정보</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>과목:</strong> <span id="detailSubject"></span></p>
+                <p><strong>마감일:</strong> <span id="detailDeadline"></span></p>
+                <p><strong>시행일:</strong> <span id="detailstartiime"></span></p>
+                <p><strong>고정 여부:</strong> <span id="detailFixed"></span></p>
+                <p><strong>시험 여부:</strong> <span id="detailExam"></span></p>
+                <p><strong>소요 시간:</strong> <span id="detailTime"></span></p>
+              </div>
+              <div class="modal-footer" id="editbuttons">
+                <a href="#" id="editTaskLink" class="btn btn-primary">수정</a>
+                <button type="button" class="btn btn-success" id="markDoneBtn">완료</button>
+                <button type="button" class="btn btn-warning d-none" id="unmarkDoneBtn">미완료</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+<script>
+  window.prev_year=JSON.parse("{{ prev_year }}");
+  window.prev_month=JSON.parse("{{ prev_month }}");
+  window.next_year=JSON.parse("{{ next_year }}");
+  window.next_month=JSON.parse("{{ next_month }}");
+</script>
+<script src="{% static 'calendar_list.js' %}"></script>
+{% endblock %}

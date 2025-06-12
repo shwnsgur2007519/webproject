@@ -1,0 +1,35 @@
+.calendar-table {
+  width: 100%;
+  height: calc(100vh - 150px); /* 상단 바 높이 고려 */
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.calendar-table tr {
+  border: 1px solid #ccc;
+  vertical-align: top;
+  padding: 5px;
+}
+
+.calendar-table td {
+  border: 1px solid #ccc;
+  vertical-align: top;
+  padding: 5px;
+  height: calc((100vh - 150px) / 7); /* 최대 6주 기준 높이 */
+}
+
+.calendar-date {
+  font-weight: bold;
+  text-align:center;
+}
+
+.calendar-date.today {
+  background-color: #a3c7ff;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  display: inline-block;
+  color: #000;
+}
