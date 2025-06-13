@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'u#m-r54w(g&yb3zktktc1x@+qyb=&p1v5shwxoei$3qej2ywr_!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = False
 
 ALLOWED_HOSTS = ['aiproject-462109.du.r.appspot.com', '127.0.0.1', '10.171.24.201']
 
