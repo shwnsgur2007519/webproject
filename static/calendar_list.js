@@ -72,7 +72,7 @@ function openScheduleModal(el) {
 // ✅ 상세 보기
 function openTaskDetail(el) {
   document.getElementById("taskDetailModalLabel").textContent = insert_text_detail(el.dataset);
-  document.getElementById("detailSubject").textContent = el.dataset.subject || '없음';
+  // document.getElementById("detailSubject").textContent = el.dataset.subject || '없음';
   document.getElementById("detailDeadline").textContent = el.dataset.deadline || '없음';
   document.getElementById("detailstartiime").textContent = el.dataset.start_time || '없음';
   document.getElementById("detailFixed").textContent = el.dataset.fixed === "true" ? "예" : "아니오";

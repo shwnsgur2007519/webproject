@@ -7,7 +7,6 @@
     <thead class="table-light">
       <tr>
         <th>일정명</th>
-        <th>과목</th>
         <th>마감일</th>
         <th>고정</th>
         <th>시험</th>
@@ -18,7 +17,6 @@
       {% for item in schedules %}
       <tr>
         <td class="fw-bold">{{ item.task_name }}</td>
-        <td>{{ item.subject }}</td>
         <td>{{ item.deadline|date:"Y-m-d H:i" }}</td>
         <td>{{ item.is_fixed|yesno:"✅,❌" }}</td>
         <td>{{ item.is_exam_task|yesno:"📘,❌" }}</td>
