@@ -1,5 +1,7 @@
 from django import forms
 from .models import Schedule, ScheduleType
+from django.utils import timezone
+from datetime import timedelta
 
 COLOR_CHOICES = [
     ('#D96D5F', '색상 1'),

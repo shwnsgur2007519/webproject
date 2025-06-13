@@ -1,6 +1,9 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+
 # Create your models here.
 class ScheduleType(models.Model):
     name=models.CharField(max_length=50,blank=True)
@@ -29,6 +32,7 @@ class Schedule(models.Model):
     
     
     def clean(self):
+        super().clean()
         # 조건: 시험 일정이면 deadline은 필수
         errors={}
         if self.task_name == '':
@@ -39,6 +43,7 @@ class Schedule(models.Model):
             errors['start_time']='고정 일정이면 반드시 입력해야 합니다'
         # if self.is_fixed and self.end_time is None:
         #     errors['end_time']='고정 일정이면 반드시 입력해야 합니다'
+        
         if errors:
             raise ValidationError(errors)
     

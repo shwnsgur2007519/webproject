@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from .ai import schedule_relocation  # 상대경로 import
+from .schedule_relocation import schedule_relocation  # 상대경로 import
 
 # 1. JSON 파일 불러오기
 with open('./testjson.json', 'r', encoding='utf-8') as f:

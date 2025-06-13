@@ -1,7 +1,8 @@
+from django.utils.timezone import make_aware
+from django.utils import timezone
 from datetime import datetime, timedelta, time
 from .models import Schedule, ScheduleType
 from django.contrib.auth.models import User
-from datetime import datetime
 import os
 import sys
 import numpy as np
@@ -62,7 +63,7 @@ def toJson(instances):
     """
     result = []
     for inst in instances:
-        def dt_str(dt):
+        def dt_str(dt: datetime):
             return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
 
         data = {
@@ -88,10 +89,6 @@ def toJson(instances):
 
 import copy
 def schedule_relocation(task_list_dup, schedule_start, schedule_end, available_times):
-    import os
-    import random
-    import numpy as np
-    from datetime import datetime, timedelta, time
 
     # 1) 기본 설정
     state_dim   = 3
