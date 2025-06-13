@@ -43,6 +43,10 @@ class Schedule(models.Model):
             errors['start_time']='고정 일정이면 반드시 입력해야 합니다'
         # if self.is_fixed and self.end_time is None:
         #     errors['end_time']='고정 일정이면 반드시 입력해야 합니다'
+        if self.difficulty and not 1<=self.difficulty<=5:
+            errors['difficulty'] = '1에서 5 사이여야 합니다.'
+        if self. importance and not 1<=self.importance<=5:
+            errors['difficulty'] = '1에서 5 사이여야 합니다.'
         
         if errors:
             raise ValidationError(errors)
