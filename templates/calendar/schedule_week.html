@@ -53,7 +53,7 @@
       {% for day in days %}
         <td class="px-1 py-0" id="cell-{{day|date:'Y-m-d'}}-{{hour|stringformat:'02d'}}" 
         onclick="if (event.target === this) window.location.href='{% url 'calendar:schedule_create'%}?date={{day|date:'Y-m-d'}}-{{hour}}-00'"
-        </td>
+        /td>
       {% endfor %}
     </tr>
   {% endfor %}
