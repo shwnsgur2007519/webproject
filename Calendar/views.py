@@ -7,6 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import make_aware, make_naive
+from datetime import timedelta, datetime, time
+from django.utils.dateparse import parse_date
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
@@ -14,7 +16,6 @@ from .schedule_relocation import schedule_relocation, toJson, toSchedule
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from datetime import timedelta, datetime
 from datetime import timezone as tz
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -98,6 +99,8 @@ def index(request):
             'task_type' : str(s.task_type),
             'duration_minutes' : s.duration_minutes,
             'start_time': s.start_time.strftime('%Y-%m-%d %H:%M') if s.start_time else '',
+            'year' : year,
+            'month' : month,
         }
         for type, s in schedule_list
     ]
@@ -232,9 +235,15 @@ def schedule_create(request):
                 return redirect('calendar:index')
             except ValidationError as e:
                 form.add_error(None, e)  # 폼 전체 에러로 추가
-
     else:
-        form = ScheduleForm(owner=request.user)
+        datetime_str = request.GET.get('date')
+        initial_data = {}
+        if datetime_str:
+            parsed_datetime = parsed_datetime = datetime.strptime(datetime_str, "%Y-%m-%d-%H-%M")
+            if parsed_datetime:
+                initial_data['deadline'] = parsed_datetime
+        form = ScheduleForm(initial=initial_data, owner=request.user)
+    print(initial_data)
     return render(request, 'calendar/schedule_form.html', {'form': form, 'is_edit': False})
 
 @login_required(login_url='common:login')

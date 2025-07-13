@@ -36,12 +36,12 @@
       </colgroup>
     <thead>
     <tr>
-      <th
-      >시간</th>
+      <th>시간</th>
       {% for day in days %}
         <th {% if day == today %}
         class="border border-3 border-primary"
         {% endif %}
+        onclick="window.location.href='{% url 'calendar:schedule_create'%}?date={{day|date:'Y-m-d'}}-23-59'"
         >{{ day|date:"m/d (D)" }}</th>
       {% endfor %}
     </tr>
@@ -51,7 +51,8 @@
     <tr>
       <th>{{ hour|stringformat:"02d" }}:00</th>
       {% for day in days %}
-        <td class="px-1 py-0" id="cell-{{day|date:'Y-m-d'}}-{{hour|stringformat:'02d'}}">
+        <td class="px-1 py-0" id="cell-{{day|date:'Y-m-d'}}-{{hour|stringformat:'02d'}}" 
+        onclick="if (event.target === this) window.location.href='{% url 'calendar:schedule_create'%}?date={{day|date:'Y-m-d'}}-{{hour}}-00'"
         </td>
       {% endfor %}
     </tr>

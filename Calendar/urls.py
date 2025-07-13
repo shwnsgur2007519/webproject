@@ -21,6 +21,5 @@ urlpatterns = [
     path('schedule/replace/ai_confirm', views.ai_confirm, name='ai_confirm'),
     path('schedule/replace/ai_cancel', views.ai_cancel, name='ai_cancel'),
     path('schedule/how_to_use', views.how_to_use, name='how_to_use'),
-    # path('schedule/test', views.test, name='test'),
     path('schedule/<int:pk>/duplicate/', views.schedule_duplicate, name='schedule_duplicate'),
 ]

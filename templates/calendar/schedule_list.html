@@ -44,30 +44,29 @@
         {% for week in calendar_data %}
         <tr>
           {% for day in week %}
-          <td class="align-top px-1 py-0" style="height: calc((100vh - 200px) / 6); overflow: hidden;">
-            {% if day != 0 %}
-              <!-- 날짜 숫자 (오늘이면 동그라미) -->
-              {% if day == today_day %}
-                <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-0 fw-bold"
-                    style="width: 1.5rem; height: 1.5rem;">
-                  {{ day }}
-                </div>
-              {% else %}
-                <div class="fw-bold mb-0">{{ day }}</div>
-              {% endif %}
-
-              <!-- 일정 리스트 -->
-              {% with schedule_map|get_item:day as schedule_pairs %}
-                {% if schedule_pairs %}
-                <div class="d-flex flex-column gap-1 align-items-start" id="cell-{{day}}">
-                  <!-- <div id="cell-{{ day }}"> -->
-                    <!-- 이 안을 JS가 채움 -->
-                  <!-- </div> -->
-                   
-                </div>
+          <td class="align-top px-1 py-0" style="height: calc((100vh - 200px) / 6); overflow: hidden;" 
+          {% if day > 0 %}
+          onclick="if (event.target === this) window.location.href='{% url 'calendar:schedule_create'%}?date={{year}}-{{month}}-{{day}}-23-59'"
+          {%endif%}>
+              {% if day != 0 %}
+                <!-- 날짜 숫자 (오늘이면 동그라미) -->
+                {% if day == today_day %}
+                  <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-0 fw-bold"
+                      style="width: 1.5rem; height: 1.5rem;">
+                    {{ day }}
+                  </div>
+                {% else %}
+                  <div class="fw-bold mb-0">{{ day }}</div>
                 {% endif %}
-              {% endwith %}
-            {% endif %}
+
+                <!-- 일정 리스트 -->
+                {% with schedule_map|get_item:day as schedule_pairs %}
+                  {% if schedule_pairs %}
+                  <div class="d-flex flex-column gap-1 align-items-start" id="cell-{{day}}">
+                  </div>
+                  {% endif %}
+                {% endwith %}
+              {% endif %}              
 
 
           </td>

@@ -22,7 +22,7 @@ function openScheduleModal(el) {
         Object.keys(item).forEach(key =>{
           li.dataset[key]=item[key];
         })
-        
+
         li.onclick = () => openTaskDetail(li);
         listEl.appendChild(li);
       });
@@ -151,3 +151,5 @@ function reload(){
 document.addEventListener("DOMContentLoaded", () => {
   reload();
 });
+
+// document.getElementById('cell-')
