@@ -27,7 +27,6 @@ def get_now():
 def how_to_use(request):
     return render(request, 'calendar/how_to_use.html', {'has_ai_session': 'ai_result_json' in request.session})
 
-
 def index(request):
     today = get_now().date()
     year = int(request.GET.get('year', today.year))

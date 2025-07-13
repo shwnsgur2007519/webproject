@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 
-# Create your models here.
 class ScheduleType(models.Model):
     name=models.CharField(max_length=50,blank=True)
     owner=models.ForeignKey(User, on_delete=models.CASCADE)
@@ -53,4 +52,3 @@ class Schedule(models.Model):
     
     def __str__(self):
         return f"{self.task_name}[{self.owner}]"
-

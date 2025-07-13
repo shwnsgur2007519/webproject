@@ -101,7 +101,7 @@
               <div class="modal-body">
                 <!-- <p><strong>과목:</strong> <span id="detailSubject"></span></p> -->
                 <p><strong>마감일:</strong> <span id="detailDeadline"></span></p>
-                <p><strong>시행일:</strong> <span id="detailstartiime"></span></p>
+                <p><strong>시행일:</strong> <span id="detailstarttime"></span></p>
                 <p><strong>고정 여부:</strong> <span id="detailFixed"></span></p>
                 <p><strong>시험 여부:</strong> <span id="detailExam"></span></p>
                 <p><strong>소요 시간:</strong> <span id="detailTime"></span></p>
@@ -125,5 +125,6 @@
   window.next_year=JSON.parse("{{ next_year }}");
   window.next_month=JSON.parse("{{ next_month }}");
 </script>
+<script src="{% static 'calendar_render.js' %}"></script>
 <script src="{% static 'calendar_list.js' %}"></script>
 {% endblock %}

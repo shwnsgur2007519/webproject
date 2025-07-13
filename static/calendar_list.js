@@ -1,32 +1,3 @@
-
-// ✅ 현재 체크박스 상태를 객체로 추출
-function getFilterSettings() {
-  return {
-    showDone: document.getElementById("showDone").checked,
-    showDeadline: document.getElementById("showDeadline").checked,
-    showStart: document.getElementById("showStart").checked,
-  };
-}
-
-// ✅ 설정 기반 필터 함수
-function shouldShow(item, settings) {
-  const isDone = item.is_done;
-  const type = item.type;
-
-  if (type === "deadline") {
-    return settings.showDeadline && (!isDone || (isDone && settings.showDone));
-  }
-
-  if (type === "start_time") {
-    return settings.showStart && (!isDone || (isDone && settings.showDone));
-  }
-
-  if (type === "ai_schedule") {
-    return true;
-  }
-  return false;
-}
-
 // ✅ 모달 렌더링
 function openScheduleModal(el) {
   const day = el.getAttribute('data-day');
@@ -48,17 +19,9 @@ function openScheduleModal(el) {
         insert_text(item, li);
         
         // 데이터 추가
-        li.dataset.task = item.task_name;
-        li.dataset.subject = item.subject;
-        li.dataset.deadline = item.deadline;
-        li.dataset.fixed = item.is_fixed;
-        li.dataset.exam = item.is_exam_task;
-        li.dataset.id = item.id;
-        li.dataset.owner = item.owner_id;
-        li.dataset.done = item.is_done;
-        li.dataset.task_type = item.task_type;
-        li.dataset.duration_minutes= item.duration_minutes;
-        li.dataset.start_time= item.start_time;
+        Object.keys(item).forEach(key =>{
+          li.dataset[key]=item[key];
+        })
         
         li.onclick = () => openTaskDetail(li);
         listEl.appendChild(li);
@@ -69,62 +32,20 @@ function openScheduleModal(el) {
   modal.show();
 }
 
-// ✅ 상세 보기
-function openTaskDetail(el) {
-  document.getElementById("taskDetailModalLabel").textContent = insert_text_detail(el.dataset);
-  // document.getElementById("detailSubject").textContent = el.dataset.subject || '없음';
-  document.getElementById("detailDeadline").textContent = el.dataset.deadline || '없음';
-  document.getElementById("detailstartiime").textContent = el.dataset.start_time || '없음';
-  document.getElementById("detailFixed").textContent = el.dataset.fixed === "true" ? "예" : "아니오";
-  document.getElementById("detailExam").textContent = el.dataset.exam === "true" ? "예" : "아니오";
-  if(el.dataset.duration_minutes !== undefined && el.dataset.duration_minutes !== 'null') {
-    document.getElementById("detailTime").textContent = el.dataset.duration_minutes;
-  }
-  else {
-    document.getElementById("detailTime").textContent = "없음";
-  }
-  
-  const id = el.dataset.id;
-  const editLink = document.getElementById("editTaskLink");
-  editLink.href = `/calendar/schedule/${id}/edit/?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-  editLink.classList.remove("d-none");
-  const isDone = el.dataset.done === "true";
 
-  const doneBtn = document.getElementById("markDoneBtn");
-  const undoneBtn = document.getElementById("unmarkDoneBtn");
-  const Editbtn = document.getElementById("editbuttons");
-
-  if (!window.hasAISession) {
-    Editbtn.classList.remove("d-none");
-    if (isDone) {
-      doneBtn.classList.add("d-none");
-      undoneBtn.classList.remove("d-none");
-    } else {
-      doneBtn.classList.remove("d-none");
-      undoneBtn.classList.add("d-none");
-    }
-  }
-  else{
-    Editbtn.classList.add("d-none");
-  }
-
-
-  const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
-  modal.show();
-}
 
 // ✅ DOM에 있는 일정 요소 숨김/표시
 function updateVisibility() {
   const settings = getFilterSettings();
 
   document.querySelectorAll("[data-type='deadline']").forEach(el => {
-    const isDone = el.dataset.done === "true";
+    const isDone = el.dataset.is_done === "true";
     const should = settings.showDeadline && (!isDone || (isDone && settings.showDone));
     el.style.display = should ? "" : "none";
   });
 
   document.querySelectorAll("[data-type='start_time']").forEach(el => {
-    const isDone = el.dataset.done === "true";
+    const isDone = el.dataset.is_done === "true";
     const should = settings.showStart && (!isDone || (isDone && settings.showDone));
     el.style.display = should ? "" : "none";
   });
@@ -185,20 +106,11 @@ function renderSchedules() {
         (item.type === "start_time" || item.type === "ai_schedule")
           ? (item.is_done ? "#4677be" : "#0d6efd")
           : item.color;
-      // data-* 속성 추가
-      div.dataset.type = item.type;
-      div.dataset.done = item.is_done;
+          // data-* 속성 추가
       div.dataset.day = day;
-      div.dataset.id = item.id;
-      div.dataset.task = item.task_name;
-      div.dataset.subject = item.subject;
-      div.dataset.deadline = item.deadline;
-      div.dataset.fixed = item.is_fixed;
-      div.dataset.exam = item.is_exam_task;
-      div.dataset.owner = item.owner_id;
-      div.dataset.task_type = item.task_type;
-      div.dataset.duration_minutes= item.duration_minutes;
-      div.dataset.start_time= item.start_time;
+      Object.keys(item).forEach(key =>{
+        div.dataset[key]=item[key];
+      })
       div.setAttribute("role", "button");
       div.setAttribute("onclick", "openTaskDetail(this)");
       insert_text(item, div);

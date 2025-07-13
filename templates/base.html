@@ -47,6 +47,11 @@
                         <a class="nav-link" href="{% url 'common:signup' %}">회원가입</a>
                     {% endif %}
                 </li>
+                <li>
+                    {% if user.is_authenticated and user.is_superuser%}
+                        <a class="nav-link" href="/admin/">관리</a>
+                    {% endif %}
+                </li>
             </ul>
 
             <div class="d-flex align-items-center flex-wrap">

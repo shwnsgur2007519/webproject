@@ -42,7 +42,7 @@
                 {% for code, label in form.fields.color.choices %}
                     <option value="{{ code }}"
                         {% if form.initial.color == code or form.data.color == code %}selected{% endif %}
-                        style="background-color: {{ code }}; color: {% if code in '#D9D96D,#D9C56D,#D9B86D,#D9A46D,#D98C6D' %}#000{% else %}#fff{% endif %};">
+                        style="background-color: {{ code }}; color: {% if code in '#FFBF00,#EEFF00,#00FF33' %}#000{% else %}#fff{% endif %};">
                         {{ label }}
                     </option>
                 {% endfor %}
