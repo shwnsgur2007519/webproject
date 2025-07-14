@@ -3,17 +3,18 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 class ScheduleType(models.Model):
     name=models.CharField(max_length=50,blank=True)
-    owner=models.ForeignKey(User, on_delete=models.CASCADE)
+    owner=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
     def __str__(self):
         return f"{self.name}"
 
 
 class Schedule(models.Model):
-    owner=models.ForeignKey(User, on_delete=models.CASCADE)
+    owner=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     task_name=models.CharField(max_length=50, blank=True)
     duration_minutes=models.IntegerField(null=True, blank=True)
     difficulty=models.IntegerField(null=True, blank=True)
@@ -52,3 +53,20 @@ class Schedule(models.Model):
     
     def __str__(self):
         return f"{self.task_name}[{self.owner}]"
+
+class ShareSetting(models.Model):
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='shared_from_me', on_delete=models.CASCADE
+    )
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='shared_to_me', on_delete=models.CASCADE
+    )
+    schedule_type = models.ForeignKey(
+        ScheduleType, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    class Meta:
+        unique_together = ('from_user', 'to_user', 'schedule_type')
+
+    def __str__(self):
+        return f"{self.from_user} → {self.to_user} : {self.schedule_type or '(기본 분류)'}"

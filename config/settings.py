@@ -9,6 +9,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['aiproject-462109.du.r.appspot.com', '127.0.0.1', '10.171.24.201']
 
+AUTH_USER_MODEL = 'common.User'
 
 SECRET_KEY='asdasd'
 

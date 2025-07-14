@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">{{user_profile.username}}님의 정보 👤</h2>
+
+  <div class="card shadow-sm rounded-3">
+    <div class="card-body">
+      <ul class="list-group list-group-flush mb-3">
+        {%if user_profile.is_superuser%}
+        <li class="list-group-item">
+          <strong>관리자</strong>
+        </li>
+        {%endif%}
+        <li class="list-group-item">
+          <strong>아이디:</strong> {{ user_profile.username }}
+        </li>
+        <li class="list-group-item">
+          <strong>이메일:</strong> {{ user_profile.email }}
+        </li>
+        <li class="list-group-item">
+          <strong>닉네임:</strong> {{ user_profile.nickname|default:"(설정되지 않음)" }}
+        </li>
+      </ul>
+
+      {% if is_owner %}
+        <div class="text-end">
+          <a href="{% url 'common:user_edit' username=user_profile.username %}" class="btn btn-outline-primary">
+            정보 수정
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 from .models import Schedule, ScheduleType
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 
 COLOR_CHOICES = [
     ('#FF0000', '색상 1'),
@@ -70,3 +71,20 @@ class ScheduleTypeForm(forms.ModelForm):
     class Meta:
         model=ScheduleType
         fields = ['name']
+
+User = get_user_model()
+
+class NicknameForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['nickname']
+
+from django.forms import modelformset_factory
+from .models import ShareSetting
+
+ShareSettingFormSet = modelformset_factory(
+    ShareSetting,
+    fields=('to_user', 'schedule_type'),
+    extra=1,
+    can_delete=True
+)
