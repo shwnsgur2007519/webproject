@@ -105,8 +105,8 @@ function renderSchedules() {
       div.style.backgroundColor = 
         (item.type === "start_time" || item.type === "ai_schedule")
           ? (item.is_done ? "#4677be" : "#0d6efd")
-          : item.color;
-          // data-* 속성 추가
+          : (item.is_shared ? "#555555ff" : item.color);
+
       div.dataset.day = day;
       Object.keys(item).forEach(key =>{
         div.dataset[key]=item[key];

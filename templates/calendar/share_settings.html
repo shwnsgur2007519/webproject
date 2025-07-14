@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load dict_extras %}
+{% block content %}
+<div class="container py-4">
+    {% if messages %}
+    <div class="my-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+  <h2 class="mb-4">📤 일정 공유 설정</h2>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- 공유 상태 테이블 -->
+    <h5 class="mb-3">현재 공유 중인 사용자</h5>
+    <table class="table table-hover text-center align-middle">
+    <thead class="table-light">
+        <tr>
+        <th>사용자</th>
+        <th>모두 선택</th>
+        {% for st in schedule_types %}
+            <th>{{ st.name }}</th>
+        {% endfor %}
+        <th>기본 분류</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in shared_users %}
+        <tr>
+        <td>{{ user.username }}</td>
+        <td>
+            <input type="checkbox" class="select-all-row" data-user="{{ user.id }}">
+        </td>
+        {% for st in schedule_types %}
+            <td>
+            <input type="checkbox"
+                    name="share_{{ user.id }}_{{ st.id }}"
+                    class="share-checkbox user-{{ user.id }}"
+                    {% if shared_map|dict_get:user|dict_get:st %}checked{% endif %}>
+            </td>
+        {% endfor %}
+        <td>
+            <input type="checkbox"
+                name="share_{{ user.id }}_null"
+                class="share-checkbox user-{{ user.id }}"
+                {% if shared_map|dict_get:user|dict_get:None %}checked{% endif %}>
+        </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <div class="text-end mt-4">
+      <button type="submit" name="action" value="save_all" class="btn btn-primary">
+        전체 저장
+      </button>
+    </div>
+    <hr class="my-4">
+
+    <!-- 새로운 공유 유저 추가 -->
+    <h5 class="mb-3">공유 유저 추가</h5>
+    <div class="row">
+        <div class="col-md-5 mb-3">
+            <label for="new_user" class="form-label">사용자 ID 입력</label>
+            <input type="text" name="new_user" id="new_user" class="form-control">
+        </div>
+
+      <div class="col-md-5 mb-3">
+        <label for="new_schedule_type" class="form-label">공유할 일정 분류</label>
+            <select name="new_schedule_type" id="new_schedule_type" class="form-control">
+            <option value="">--- 선택 ---</option>
+            <option value="__all__">모든 분류</option>
+            <option value="__default__">(기본 분류)</option>
+            {% for st in schedule_types %}
+                <option value="{{ st.id }}">{{ st.name }}</option>
+            {% endfor %}
+            </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end mb-3">
+        <button type="submit" name="action" value="add_share" class="btn btn-success w-100">
+          추가
+        </button>
+      </div>
+    </div>
+
+
+  </form>
+  <hr class="my-5">
+    <h5 class="mb-3">📥 공유 받은 일정 표시</h5>
+    <p class="text-muted">아래 사용자의 일정은 당신에게 공유되었습니다. 원하는 사용자의 일정을 체크하여 캘린더에 표시할 수 있습니다.</p>
+
+    <form method="post" class="mb-4">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_visible">
+
+    {% for user in incoming_shared_users %}
+        <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="visible_users" value="{{ user.id }}" id="vu{{ user.id }}"
+                {% if user.id in visible_ids %}checked{% endif %}>
+        <label class="form-check-label" for="vu{{ user.id }}">
+            {{ user.username }}의 일정
+        </label>
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-outline-primary">표시 설정 저장</button>
+    </form>
+
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // 각 사용자별 "모두 선택" 상태 초기화
+  document.querySelectorAll('.select-all-row').forEach(selectAllCheckbox => {
+    const userId = selectAllCheckbox.dataset.user;
+    const checkboxes = document.querySelectorAll(`.share-checkbox.user-${userId}`);
+
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+    if (allChecked) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.indeterminate = false;
+    } else if (anyChecked) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = true;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+
+    // 행 전체 선택 기능
+    selectAllCheckbox.addEventListener('change', function () {
+      checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // 각 체크박스 변경 시 "모두 선택" 상태 업데이트
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', function () {
+        const all = Array.from(checkboxes).every(x => x.checked);
+        const any = Array.from(checkboxes).some(x => x.checked);
+        selectAllCheckbox.checked = all;
+        selectAllCheckbox.indeterminate = !all && any;
+      });
+    });
+  });
+});
+</script>
+
+{% endblock %}

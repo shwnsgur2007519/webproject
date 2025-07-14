@@ -18,8 +18,9 @@ urlpatterns = [
     path('schedule/<int:pk>/delete/', views.schedule_delete, name='schedule_delete'),
     path('schedule/replace/', views.schedule_replace, name='schedule_replace'),
     path('schedule/replace/ai_run', views.ai_run, name='ai_run'),
-    path('schedule/replace/ai_confirm', views.ai_confirm, name='ai_confirm'),
-    path('schedule/replace/ai_cancel', views.ai_cancel, name='ai_cancel'),
-    path('schedule/how_to_use', views.how_to_use, name='how_to_use'),
+    path('replace/ai_confirm', views.ai_confirm, name='ai_confirm'),
+    path('replace/ai_cancel', views.ai_cancel, name='ai_cancel'),
+    path('how_to_use', views.how_to_use, name='how_to_use'),
     path('schedule/<int:pk>/duplicate/', views.schedule_duplicate, name='schedule_duplicate'),
+    path('schedule/share',views.share_settings, name='share_settings'),
 ]

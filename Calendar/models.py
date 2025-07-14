@@ -70,3 +70,10 @@ class ShareSetting(models.Model):
 
     def __str__(self):
         return f"{self.from_user} → {self.to_user} : {self.schedule_type or '(기본 분류)'}"
+
+class VisibleShare(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='visible_shares')  # 보는 사람
+    target = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='visible_by')  # 보여지는 사람
+
+    class Meta:
+        unique_together = ('user', 'target')

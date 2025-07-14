@@ -65,6 +65,14 @@ function openTaskDetail(el) {
   document.getElementById("detailstarttime").textContent = el.dataset.start_time || '없음';
   document.getElementById("detailFixed").textContent = el.dataset.fixed === "true" ? "예" : "아니오";
   document.getElementById("detailExam").textContent = el.dataset.exam === "true" ? "예" : "아니오";
+  if(el.dataset.is_shared === "true"){
+    document.getElementById("detailOwner").parentElement.classList.remove("d-none");
+    document.getElementById("detailOwner").textContent = el.dataset.owner_username;
+  }
+  else{
+    document.getElementById("detailOwner").parentElement.classList.add("d-none");
+  }
+
   if(el.dataset.duration_minutes !== undefined && el.dataset.duration_minutes !== 'null') {
     document.getElementById("detailTime").textContent = el.dataset.duration_minutes;
   }
@@ -81,7 +89,7 @@ function openTaskDetail(el) {
   const undoneBtn = document.getElementById("unmarkDoneBtn");
   const Editbtn = document.getElementById("editbuttons");
 
-  if (!window.hasAISession) {
+  if (!window.hasAISession && el.dataset.is_shared === "false") {
     Editbtn.classList.remove("d-none");
     if (isDone) {
       doneBtn.classList.add("d-none");

@@ -1,17 +1,16 @@
 import calendar
 import json
 from django.shortcuts import render, redirect
-from .models import Schedule, ScheduleType
+from .models import Schedule, ScheduleType, ShareSetting, VisibleShare
 from .forms import ScheduleForm, ScheduleTypeForm
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import make_aware, make_naive
-from datetime import timedelta, datetime, time
-from django.utils.dateparse import parse_date
+from django.utils.timezone import make_naive
+from datetime import timedelta, datetime
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Exists
 from .schedule_relocation import schedule_relocation, toJson, toSchedule
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +18,9 @@ from django.http import JsonResponse
 from datetime import timezone as tz
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 KST = tz(timedelta(hours=9))
 
 def get_now():
@@ -27,6 +28,56 @@ def get_now():
 
 def how_to_use(request):
     return render(request, 'calendar/how_to_use.html', {'has_ai_session': 'ai_result_json' in request.session})
+
+def allowed_schedules(schedules, user):
+    if user.is_authenticated:
+        # ① 본인 일정
+        myschedules = schedules.filter(
+            owner=user
+        )
+
+        # 공유 일정 – 나에게 공유해준 사람들 중 내가 보도록 선택한 유저
+        shared_from_users = VisibleShare.objects.filter(user=user).values_list('target', flat=True)
+
+        # 공유된 일정 ID 추출 (기본 분류 포함 처리)
+        shared_ids = schedules.filter(
+            owner__in=shared_from_users
+        )
+        
+        typed_ids = shared_ids.annotate(
+            is_allowed=Exists(
+                ShareSetting.objects.filter(
+                    from_user=OuterRef('owner'),
+                    to_user=user
+                ).filter(
+                    schedule_type=OuterRef('task_type')
+                )
+            )
+        ).filter(is_allowed=True).values_list('id', flat=True)
+        
+        default_ids = shared_ids.annotate(
+            is_allowed=Exists(
+                ShareSetting.objects.filter(
+                    from_user=OuterRef('owner'),
+                    to_user=user
+                ).filter(
+                    schedule_type__isnull=True
+                )
+            )
+        ).filter(Q(is_allowed=True) & Q(task_type__isnull = True)).values_list('id', flat=True)
+        
+        allowed_shared_ids=typed_ids.union(default_ids)
+
+        # 실제 일정은 annotate 없이 다시 가져오기
+        shared_schedules = schedules.filter(id__in=allowed_shared_ids)
+
+        # 공유 일정 합치기
+        schedules = myschedules.union(shared_schedules)
+
+    else:
+        schedules = schedules.none()
+    
+    return schedules
 
 def index(request):
     today = get_now().date()
@@ -36,16 +87,12 @@ def index(request):
     cal = calendar.Calendar(firstweekday=6)
     month_days = cal.monthdayscalendar(year, month)
 
-    if request.user.is_authenticated:
-        schedules = Schedule.objects.filter(
-            owner=request.user
-        ).filter(
+    schedules=allowed_schedules(
+        Schedule.objects.filter(
             Q(deadline__year=year, deadline__month=month) |
             Q(start_time__year=year, start_time__month=month)
-        )
-    else:
-        schedules = Schedule.objects.none()
-
+        ), request.user
+    )
 
     ai_result_json = request.session.get('ai_result_json', '')
     ai_results = []
@@ -56,20 +103,21 @@ def index(request):
         ai_results = toSchedule(ai_results_str)
         hidden_ids = [s['id'] for s in ai_results_str]  # 숨길 원래 일정 id
 
-
     # 날짜별 일정 분류
     schedule_map = {}
 
     for schedule in schedules:
         # 마감일 기준 등록
         if schedule.deadline:
-            date_key = schedule.deadline.day
-            schedule_map.setdefault(date_key, []).append(("deadline", schedule))
+            if schedule.deadline and schedule.deadline.month == month:
+                date_key = schedule.deadline.day
+                schedule_map.setdefault(date_key, []).append(("deadline", schedule))
 
         # 시작일 기준 등록
         if schedule.start_time and not schedule.id in hidden_ids:
-            date_key = schedule.start_time.day
-            schedule_map.setdefault(date_key, []).append(("start_time", schedule))
+            if schedule.start_time and schedule.start_time.month == month:
+                date_key = schedule.start_time.day
+                schedule_map.setdefault(date_key, []).append(("start_time", schedule))
         
     for schedule in ai_results:
         if schedule.start_time and schedule.start_time.month == month:
@@ -101,6 +149,8 @@ def index(request):
             'start_time': s.start_time.strftime('%Y-%m-%d %H:%M') if s.start_time else '',
             'year' : year,
             'month' : month,
+            'owner_username': s.owner.username,
+            'is_shared': s.owner != request.user,
         }
         for type, s in schedule_list
     ]
@@ -156,8 +206,8 @@ def schedule_week(request):
         hidden_ids = [s['id'] for s in ai_results_str]  # 숨길 원래 일정 id
 
 
-    schedules = Schedule.objects.filter(
-        owner=request.user,
+    schedules = allowed_schedules(
+        Schedule.objects, request.user
     )
     # 요일별로 스케줄 정리
     schedule_map = {}
@@ -205,6 +255,8 @@ def schedule_week(request):
                 'task_type': str(s.task_type),
                 'duration_minutes': s.duration_minutes,
                 'start_time': s.start_time.strftime('%Y-%m-%d %H:%M') if s.start_time else '',
+                'owner_username': s.owner.username,
+                'is_shared': s.owner != request.user,
             })
 
     
@@ -243,7 +295,6 @@ def schedule_create(request):
             if parsed_datetime:
                 initial_data['deadline'] = parsed_datetime
         form = ScheduleForm(initial=initial_data, owner=request.user)
-    print(initial_data)
     return render(request, 'calendar/schedule_form.html', {'form': form, 'is_edit': False})
 
 @login_required(login_url='common:login')
@@ -475,3 +526,130 @@ def ai_cancel(request):
     request.session.pop('ai_result_json', None)
     return redirect(request.META.get('HTTP_REFERER', 'calendar:index'))
 
+@login_required
+def share_settings(request):
+    user = request.user
+    schedule_types = ScheduleType.objects.filter(owner=user)
+    all_users = User.objects.exclude(pk=user.pk)
+
+    # POST 요청 처리
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "save_all":
+            # 기존 공유 설정 전체 삭제 후 재생성
+            ShareSetting.objects.filter(from_user=user).delete()
+
+            for other_user in all_users:
+                for st in schedule_types:
+                    key = f"share_{other_user.id}_{st.id}"
+                    if key in request.POST:
+                        ShareSetting.objects.create(
+                            from_user=user,
+                            to_user=other_user,
+                            schedule_type=st
+                        )
+                null_key = f"share_{other_user.id}_null"
+                if null_key in request.POST:
+                    ShareSetting.objects.create(
+                        from_user=user,
+                        to_user=other_user,
+                        schedule_type=None
+                    )
+            messages.success(request, "공유 설정이 저장되었습니다.")
+            return redirect('calendar:share_settings')
+        elif action == "add_share":
+            username = request.POST.get("new_user")
+            st_id = request.POST.get("new_schedule_type")
+
+            if not username:
+                messages.error(request, "사용자 ID를 입력하세요.")
+                return redirect('calendar:share_settings')
+            if username == user.username:
+                messages.error(request, "자기 자신에게는 공유할 수 없습니다.")
+                return redirect('calendar:share_settings')
+            
+            try:
+                target_user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                messages.error(request, f"'{username}' 사용자 ID는 존재하지 않습니다.")
+                return redirect('calendar:share_settings')
+
+            if st_id == "__all__":
+                for st in list(schedule_types) + [None]:
+                    ShareSetting.objects.get_or_create(
+                        from_user=user,
+                        to_user=target_user,
+                        schedule_type=st
+                    )
+                messages.success(request, f"{target_user.username} 사용자에게 모든 분류가 공유되었습니다.")
+            elif st_id == "__default__":
+                ShareSetting.objects.get_or_create(
+                    from_user=user,
+                    to_user=target_user,
+                    schedule_type=None
+                )
+                messages.success(request, f"{target_user.username} 사용자에게 기본 분류가 공유되었습니다.")
+            else:
+                try:
+                    st = ScheduleType.objects.get(pk=st_id, owner=user)
+                    ShareSetting.objects.get_or_create(
+                        from_user=user,
+                        to_user=target_user,
+                        schedule_type=st
+                    )
+                    messages.success(request, f"{target_user.username} 사용자에게 '{st.name}' 분류가 공유되었습니다.")
+                except ScheduleType.DoesNotExist:
+                    messages.error(request, "해당 일정 분류가 존재하지 않습니다.")
+
+            return redirect('calendar:share_settings')
+        elif action == "update_visible":
+            selected_ids = request.POST.getlist("visible_users")
+
+            # 기존 설정 삭제
+            VisibleShare.objects.filter(user=user).delete()
+
+            # 새로 설정된 대상 추가
+            for uid in selected_ids:
+                try:
+                    target = User.objects.get(id=uid)
+                    if ShareSetting.objects.filter(from_user=target, to_user=user).exists():  # 공유 받은 사용자만
+                        VisibleShare.objects.create(user=user, target=target)
+                except User.DoesNotExist:
+                    continue
+
+            messages.success(request, "표시할 일정이 업데이트되었습니다.")
+            return redirect('calendar:share_settings')
+
+
+
+    # GET 요청 또는 POST 후 재표시
+    shared_settings = ShareSetting.objects.filter(from_user=user)
+    shared_users = shared_settings.values_list("to_user", flat=True).distinct()
+    shared_user_objs = User.objects.filter(id__in=shared_users)
+    available_users = all_users.exclude(id__in=shared_users)
+
+    # shared_map[user][schedule_type] = True/False
+    shared_map = {}
+    for u in shared_user_objs:
+        shared_map[u] = {
+            st: ShareSetting.objects.filter(from_user=user, to_user=u, schedule_type=st).exists()
+            for st in schedule_types
+        }
+        shared_map[u][None]=ShareSetting.objects.filter(from_user=user, to_user=u, schedule_type=None).exists()
+
+    incoming_shared_users = User.objects.filter(
+        id__in=ShareSetting.objects.filter(to_user=user).values_list('from_user', flat=True).distinct()
+    )
+    visible_ids = set(VisibleShare.objects.filter(user=user).values_list('target_id', flat=True))
+    
+    context = {
+        'schedule_types': schedule_types,
+        'shared_users': shared_user_objs,
+        'available_users': available_users,
+        'shared_map': shared_map,
+        'incoming_shared_users': incoming_shared_users,
+        'visible_ids': visible_ids,
+    }
+    
+    return render(request, 'calendar/share_settings.html', context)

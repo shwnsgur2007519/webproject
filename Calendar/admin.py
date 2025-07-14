@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Schedule, ScheduleType
+from .models import Schedule, ScheduleType, ShareSetting, VisibleShare
 # Register your models here.
 # admin.site.register(Schedule)
 
@@ -11,3 +11,5 @@ class ScheduleFormAdmin(admin.ModelAdmin):
 
 admin.site.register(Schedule, ScheduleAdmin)
 admin.site.register(ScheduleType)
+admin.site.register(ShareSetting)
+admin.site.register(VisibleShare)
